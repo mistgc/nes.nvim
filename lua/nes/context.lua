@@ -31,7 +31,7 @@ function Context.new(bufnr)
   local row, col = cursor[1] - 1, cursor[2]
   local num_lines = vim.api.nvim_buf_line_count(bufnr)
   local start_line, end_line =
-    (row - config.num_prefix_context_lines).max(0), (col + config.num_postfix_context_lines).min(num_lines + 1)
+    math.max(row - config.num_prefix_context_lines, 0), math.min(col + config.num_postfix_context_lines, num_lines + 1)
   local lines = _build_lines(vim.api.nvim_buf_get_lines(bufnr, start_line, end_line, false), start_line)
   local ctx = {
     bufnr = bufnr,

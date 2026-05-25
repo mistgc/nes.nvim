@@ -6,28 +6,14 @@ local Api = {
 local config = require('nes.config')
 local logger = require('nes.logger')
 local curl = require('plenary.curl')
-
-local function _get_header_for_openai()
-  return {
-    ['Authorization'] = 'Bearer ' .. config.api_key,
-    ['Content-Type'] = 'application/json',
-  }
-end
-
-local function _get_header_for_anthropic()
-  return {
-    ['Content-Type'] = 'application/json',
-    ['x-api-key'] = config.api_key,
-    ['anthropic-version'] = '2023-06-01',
-  }
-end
+local api_util = require('nes.api.utils')
 
 function Api.get_headers()
   local header = nil
   if config.api_style == 'openai' then
-    header = _get_header_for_openai()
+    header = api_util.get_header_for_openai()
   elseif config.api_style == 'anthropic' then
-    header = _get_header_for_anthropic()
+    header = api_util.get_header_for_anthropic()
   end
 
   if not header then
@@ -52,18 +38,31 @@ function Api.get_url()
   return url
 end
 
----@param context nes.Context
+---@param ctx nes.Context
 ---@return nil
-function Api.get_payload(context)
-    local payload = nil
-    return payload
+function Api.get_payload(ctx)
+  local payload = nil
+  if config.api_style == 'openai' then
+    payload = api_util.get_payload_for_openai(ctx)
+  elseif config.api_style == 'anthropic' then
+    payload = api_util.get_payload_for_anthropic(ctx)
+  end
+
+  if not payload then
+    logger.error('Unknown Api Style: ' .. config.api_style)
+  end
+
+  return payload
 end
 
-function Api.call_llm(context, callback)
+function Api.call_llm(ctx, callback)
   local url = Api.get_url()
   local headers = Api.get_headers()
-  local payload = Api.get_payload(context)
+  local payload = Api.get_payload(ctx)
+  local stream_handle_fn = api_util.get_stream_handle_fn()
   local output = ''
+
+  logger.debug(vim.json.encode(payload, { indent = '  ', sort_key = true }))
 
   curl.post(url, {
     headers = headers,
@@ -72,27 +71,10 @@ function Api.call_llm(context, callback)
       logger.error('Api request error ' .. err)
     end,
     stream = function(_, chunk)
-      if not chunk then
-        return
-      end
-      if vim.startswith(chunk, 'data: ') then
-        chunk = chunk:sub(6)
-      end
-      if chunk == '[DONE]' then
-        return
-      end
-      local ok, event = pcall(vim.json.decode, chunk)
-      if not ok then
-        return
-      end
-      if event and event.choices and event.choices[1] then
-        local choice = event.choices[1]
-        if choice.delta and choice.delta.content then
-          output = output .. choice.delta.content
-        end
-      end
+      output = stream_handle_fn(output, chunk)
     end,
     callback = function()
+      logger.debug(output)
       callback(output)
     end,
   })

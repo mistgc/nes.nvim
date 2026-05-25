@@ -6,6 +6,8 @@
 ---@field debounce_ms integer
 ---@field num_prefix_context_lines integer
 ---@field num_postfix_context_lines integer
+---@field max_tokens integer
+---@field reasoning_effort string
 ---@field keymaps table<string, string>
 ---@field enable boolean
 ---@field _config table|nil
@@ -20,6 +22,8 @@ _defaults = {
   debounce_ms = 800,
   num_prefix_context_lines = 20,
   num_postfix_context_lines = 10,
+  max_tokens = 1024,
+  reasoning_effort = "low",
 
   keymaps = {
     accept_suggestion = '<Tab>',
@@ -44,7 +48,7 @@ setmetatable(M, {
 
 function M.setup(cfg)
   cfg = cfg or {}
-  M._config = vim.tbl_deep_extend('keep', cfg, M.defaults)
+  M._config = vim.tbl_deep_extend('keep', cfg, _defaults)
 
   -- Get API key
   if not M._config.api_key then

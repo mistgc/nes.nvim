@@ -13,17 +13,24 @@ local log_level_names = {
 }
 
 function Logger.setup()
-  Logger.logfile = vim.fs.normalize(vim.fn.stdpath('log') .. '/nes.nvim.log')
+  local log_dir = vim.fs.normalize(vim.fn.stdpath('log'))
+  vim.fn.mkdir(log_dir, 'p')
+  Logger.logfile = log_dir .. '/nes.nvim.log'
 end
 
 function Logger.write_log(filepath, msg)
-  uv.fs_open(Logger.logfile, 'a', tonumber('644', 8), function(err, fd)
+  local log_msg = msg
+  if not log_msg:match('\n$') then
+    log_msg = log_msg .. '\n'
+  end
+  uv.fs_open(filepath, 'a', tonumber('644', 8), function(err, fd)
     if err or not fd then
       vim.notify('Failed to open log file ' .. err)
+      return
     end
-    uv.fs_write(fd, msg, -1, function(write_err)
+    uv.fs_write(fd, log_msg, -1, function(write_err)
       if write_err then
-        vim.notify('Failed to write to log file ' .. err)
+        vim.notify('Failed to write to log file ' .. write_err)
       end
       uv.fs_close(fd)
     end)
