@@ -37,35 +37,46 @@ function Logger.write_log(filepath, msg)
   end)
 end
 
-function Logger.log(level, msg)
+function Logger.log(level, msg, ...)
   local level_name = log_level_names[level]
   local secs = os.time()
   local msecs = math.floor((os.clock() % 1) * 1000)
   local timestamp = string.format('%s.%03d', os.date('%Y-%m-%d %H:%M:%S', secs), msecs)
+  for _, v in ipairs({ ... }) do
+    msg = msg .. ' ' .. vim.inspect(v)
+  end
   local log_msg = string.format('%s [%s]: %s', timestamp, level_name, msg)
   Logger.write_log(Logger.logfile, log_msg)
 end
 
-function Logger.error(msg)
-  vim.notify(msg, vim.log.levels.ERROR)
-  Logger.log(vim.log.levels.ERROR, msg)
+function Logger.error(msg, ...)
+  local notify_msg = msg
+  for _, v in ipairs({ ... }) do
+    notify_msg = notify_msg .. ' ' .. vim.inspect(v)
+  end
+  vim.notify(notify_msg, vim.log.levels.ERROR)
+  Logger.log(vim.log.levels.ERROR, msg, ...)
 end
 
-function Logger.warn(msg)
-  vim.notify(msg, vim.log.levels.WARN)
-  Logger.log(vim.log.levels.WARN, msg)
+function Logger.warn(msg, ...)
+  local notify_msg = msg
+  for _, v in ipairs({ ... }) do
+    notify_msg = notify_msg .. ' ' .. vim.inspect(v)
+  end
+  vim.notify(notify_msg, vim.log.levels.WARN)
+  Logger.log(vim.log.levels.WARN, msg, ...)
 end
 
-function Logger.info(msg)
-  Logger.log(vim.log.levels.INFO, msg)
+function Logger.info(msg, ...)
+  Logger.log(vim.log.levels.INFO, msg, ...)
 end
 
-function Logger.debug(msg)
-  Logger.log(vim.log.levels.DEBUG, msg)
+function Logger.debug(msg, ...)
+  Logger.log(vim.log.levels.DEBUG, msg, ...)
 end
 
-function Logger.trace(msg)
-  Logger.log(vim.log.levels.TRACE, msg)
+function Logger.trace(msg, ...)
+  Logger.log(vim.log.levels.TRACE, msg, ...)
 end
 
 return Logger

@@ -8,6 +8,7 @@
 ---@field hash integer
 local Context = {}
 
+local logger = require('nes.logger')
 local config = require('nes.config')
 
 local function _djb2_hash(str)
@@ -19,20 +20,21 @@ local function _djb2_hash(str)
 end
 
 local function _build_lines(lines, start_line)
-  local out = ''
+  local out = {}
   for index, value in ipairs(lines) do
-    out = out .. ('%d: %s').format(start_line + index - 1, value)
+    out[index] = (start_line + index) .. ': ' .. value
   end
-  return out
+  return table.concat(out, '\n')
 end
 
 function Context.new(bufnr)
   local cursor = vim.api.nvim_win_get_cursor(bufnr)
-  local row, col = cursor[1] - 1, cursor[2]
+  local row, col = cursor[1], cursor[2]
   local num_lines = vim.api.nvim_buf_line_count(bufnr)
   local start_line, end_line =
-    math.max(row - config.num_prefix_context_lines, 0), math.min(col + config.num_postfix_context_lines, num_lines + 1)
+    math.max(row - config.num_prefix_context_lines, 0), math.min(row + config.num_postfix_context_lines, num_lines + 1)
   local lines = _build_lines(vim.api.nvim_buf_get_lines(bufnr, start_line, end_line, false), start_line)
+  logger.debug('lines: ', lines)
   local ctx = {
     bufnr = bufnr,
     cursor = { row, col },

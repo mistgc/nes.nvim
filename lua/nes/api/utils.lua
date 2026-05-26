@@ -100,7 +100,9 @@ function ApiUtils.get_stream_handle_fn()
       return output .. content
     end
   elseif config.api_style == 'anthropic' then
-    handle_fn = function(output, chunk) end
+    handle_fn = function(output, chunk)
+      -- TODO
+    end
   end
 
   if not handle_fn then

@@ -3,7 +3,8 @@ local Prompt = {}
 ---@param ctx nes.Context
 ---@return string
 function Prompt.build(ctx)
-    return string.format([[
+  return string.format(
+    [[
 You are an expert code editor assistant. Predict the NEXT logical edit based on the developer's just-completed edit.
 
 This is NOT inline completion at the cursor. Predict a different location.
@@ -38,7 +39,12 @@ Example output:
 +added line
 
 If no reasonable prediction: (empty response)
-]], ctx.filename, ctx.lines, ctx.filename, ctx.filename)
+]],
+    ctx.filename,
+    ctx.lines,
+    ctx.filename,
+    ctx.filename
+  )
 end
 
 return Prompt

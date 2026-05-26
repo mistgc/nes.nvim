@@ -23,7 +23,7 @@ _defaults = {
   num_prefix_context_lines = 20,
   num_postfix_context_lines = 10,
   max_tokens = 1024,
-  reasoning_effort = "low",
+  reasoning_effort = 'low',
 
   keymaps = {
     accept_suggestion = '<Tab>',
