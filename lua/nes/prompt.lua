@@ -8,24 +8,37 @@ You are an expert code editor assistant. Predict the NEXT logical edit based on 
 
 This is NOT inline completion at the cursor. Predict a different location.
 
-## File: %s (%s)
+## File: %s
 
 ## Context (line: content)
 ```
 %s
 ```
 
-Return ONLY valid JSON:
-{
-  "line": <1-indexed line>,
-  "start_col": <0-indexed start column>,
-  "end_col": <0-indexed end column>,
-  "old_text": "<exact existing text to replace>",
-  "new_text": "<replacement text>",
-  "reason": "<brief explanation>"
-}
-If no reasonable prediction: {"line":0,"old_text":"","new_text":"","reason":"no prediction"}
-]], ctx.filename, ctx.filename, ctx.lines)
+Return ONLY a unified diff patch in standard format. Use the context above to identify the exact location and surrounding lines.
+
+Rules:
+- Include the file header: --- a/%s and +++ b/%s
+- Include a hunk header: @@ -start,count +start,count @@
+- Prefix unchanged context lines with a single space
+- Prefix added lines with +
+- Prefix removed lines with -
+- Include enough context lines (at least 2) so the hunk is unambiguous
+- Do NOT include diff --git, index, or file mode lines
+- Do NOT include any explanation, markdown, or JSON — only the raw diff
+
+Example output:
+--- a/example.lua
++++ b/example.lua
+@@ -10,3 +10,4 @@
+ existing context
+-removed line
++replacement line
+ more context
++added line
+
+If no reasonable prediction: (empty response)
+]], ctx.filename, ctx.lines, ctx.filename, ctx.filename)
 end
 
 return Prompt
