@@ -7,6 +7,8 @@ local config = require('nes.config')
 local logger = require('nes.logger')
 local curl = require('plenary.curl')
 local api_util = require('nes.api.utils')
+local Context = require('nes.context')
+local PayloadType = api_util.PayloadType
 
 function Api.get_headers()
   local header = nil
@@ -39,13 +41,14 @@ function Api.get_url()
 end
 
 ---@param ctx nes.Context
+---@param pltype nes.api.utils.PayloadType
 ---@return nil
-function Api.get_payload(ctx)
+function Api.get_payload(ctx, pltype)
   local payload = nil
   if config.api_style == 'openai' then
-    payload = api_util.get_payload_for_openai(ctx)
+    payload = api_util.get_payload_for_openai(ctx, pltype)
   elseif config.api_style == 'anthropic' then
-    payload = api_util.get_payload_for_anthropic(ctx)
+    payload = api_util.get_payload_for_anthropic(ctx, pltype)
   end
 
   if not payload then
@@ -55,10 +58,34 @@ function Api.get_payload(ctx)
   return payload
 end
 
-function Api.call_llm(ctx, callback)
+function _call_llm_for_suggestion(ctx, callback)
   local url = Api.get_url()
   local headers = Api.get_headers()
-  local payload = Api.get_payload(ctx)
+  local payload = Api.get_payload(ctx, PayloadType.Suggestion)
+
+  logger.debug(vim.json.encode(payload, { indent = '  ', sort_key = true }))
+
+  curl.post(url, {
+    headers = headers,
+    body = vim.json.encode(payload),
+    on_error = function(err)
+      logger.error('Api request error ' .. err)
+    end,
+    callback = function(res)
+      if res.ok then
+        logger.debug(res.body)
+        callback(res.body)
+      else
+        logger.error('`_call_llm_for_suggestion` error: ' .. res.error)
+      end
+    end,
+  })
+end
+
+function _call_llm_for_nes(ctx, callback)
+  local url = Api.get_url()
+  local headers = Api.get_headers()
+  local payload = Api.get_payload(ctx, PayloadType.Nes)
   local stream_handle_fn = api_util.get_stream_handle_fn()
   local output = ''
 
@@ -78,6 +105,24 @@ function Api.call_llm(ctx, callback)
       callback(output)
     end,
   })
+end
+
+function Api.call_llm(ctx, payload_type, callback)
+  if payload_type == PayloadType.Suggestion then
+    _call_llm_for_suggestion(ctx, callback)
+  elseif payload_type == PayloadType.Nes then
+    _call_llm_for_nes(ctx, callback)
+  else
+    logger.error('The `payload_type` ' .. payload_type .. ' invalid.')
+  end
+end
+
+function Api.call_suggestion()
+  local bufnr = tonumber(vim.api.nvim_get_current_buf())
+  local ctx = Context.new(bufnr)
+  Api.call_llm(ctx, PayloadType.Suggestion, function(output)
+    logger.debug(output)
+  end)
 end
 
 return Api

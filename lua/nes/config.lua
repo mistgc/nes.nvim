@@ -4,8 +4,13 @@
 ---@field api_key string|nil
 ---@field model string
 ---@field debounce_ms integer
----@field num_prefix_context_lines integer
----@field num_postfix_context_lines integer
+---
+---@field num_prefix_context_lines_for_nes integer
+---@field num_postfix_context_lines_nes integer
+---
+---@field num_prefix_context_lines_for_suggestion integer
+---@field num_postfix_context_lines_for_suggestion integer
+---
 ---@field max_tokens integer
 ---@field reasoning_effort string
 ---@field keymaps table<string, string>
@@ -13,16 +18,21 @@
 ---@field _config table|nil
 local M = {}
 
-_defaults = {
+local _defaults = {
   -- Api Style: openai | anthropic
   api_style = 'openai',
   api_base_url = '	https://api.deepseek.com',
   api_key = nil,
   model = 'deepseek-v4-flash',
-  debounce_ms = 800,
-  num_prefix_context_lines = 20,
-  num_postfix_context_lines = 10,
-  max_tokens = 1024,
+  debounce_ms = 500,
+
+  num_prefix_context_lines_for_suggestion = 5,
+  num_postfix_context_lines_for_suggestion = 3,
+
+  num_prefix_context_lines_for_nes = 20,
+  num_postfix_context_lines_for_nes = 10,
+
+  max_tokens = 512,
   reasoning_effort = 'low',
 
   keymaps = {

@@ -1,6 +1,12 @@
 ---@class nes.api.Utils
 local ApiUtils = {}
 
+---@enum nes.api.utils.PayloadType
+ApiUtils.PayloadType = {
+  Suggestion = 0,
+  Nes = 1,
+}
+
 local config = require('nes.config')
 local prompt = require('nes.prompt')
 local logger = require('nes.logger')
@@ -39,8 +45,16 @@ function ApiUtils.build_messages_for_anthropic(system_prompt)
 end
 
 ---@param ctx nes.Context
-function ApiUtils.get_payload_for_openai(ctx)
-  local system_prompt = prompt.build(ctx)
+---@param pltype nes.api.utils.PayloadType
+function ApiUtils.get_payload_for_openai(ctx, pltype)
+  local system_prompt = nil
+
+  if pltype == ApiUtils.PayloadType.Suggestion then
+    system_prompt = prompt.build_for_suggestion(ctx)
+  elseif pltype == ApiUtils.PayloadType.Nes then
+    system_prompt = prompt.build_for_nes(ctx)
+  end
+
   return {
     ['model'] = config.model,
     ['stream'] = true,
@@ -51,8 +65,16 @@ function ApiUtils.get_payload_for_openai(ctx)
 end
 
 ---@param ctx nes.Context
-function ApiUtils.get_payload_for_anthropic(ctx)
-  local system_prompt = prompt.build(ctx)
+---@param pltype nes.api.utils.PayloadType
+function ApiUtils.get_payload_for_anthropic(ctx, pltype)
+  local system_prompt = nil
+
+  if pltype == ApiUtils.PayloadType.Suggestion then
+    system_prompt = prompt.build_for_suggestion(ctx)
+  elseif pltype == ApiUtils.PayloadType.Nes then
+    system_prompt = prompt.build_for_nes(ctx)
+  end
+
   return {
     ['model'] = config.model,
     ['max_tokens'] = config.max_tokens,
@@ -110,6 +132,20 @@ function ApiUtils.get_stream_handle_fn()
   end
 
   return handle_fn
+end
+
+local _debounce_timer = nil
+
+function ApiUtils.debounce(callback, debounce_ms)
+  if _debounce_timer then
+    _debounce_timer:close()
+    _debounce_timer = nil
+  end
+
+  _debounce_timer = vim.defer_fn(function()
+    _debounce_timer = nil
+    callback()
+  end, debounce_ms)
 end
 
 return ApiUtils

@@ -2,7 +2,24 @@ local Prompt = {}
 
 ---@param ctx nes.Context
 ---@return string
-function Prompt.build(ctx)
+function Prompt.build_for_nes(ctx)
+    return string.format([[
+You are an expert code editor assistant. Predict the NEXT logical edit based on the developer's just-completed edit.
+
+This is inline completion at the cursor.
+
+## File: %s
+
+## Context (line: content)
+```
+%s
+```
+]])
+end
+
+---@param ctx nes.Context
+---@return string
+function Prompt.build_for_nes(ctx)
   return string.format(
     [[
 You are an expert code editor assistant. Predict the NEXT logical edit based on the developer's just-completed edit.

@@ -10,6 +10,7 @@ local Context = {}
 
 local logger = require('nes.logger')
 local config = require('nes.config')
+local PayloadType = require('nes.api.utils').PayloadType
 
 local function _djb2_hash(str)
   local hash = 5381
@@ -27,12 +28,24 @@ local function _build_lines(lines, start_line)
   return table.concat(out, '\n')
 end
 
-function Context.new(bufnr)
-  local cursor = vim.api.nvim_win_get_cursor(bufnr)
+---@param bufnr integer
+---@param pltype nes.api.utils.PayloadType
+function Context.new(bufnr, pltype)
+  local cursor = vim.api.nvim_win_get_cursor(0)
   local row, col = cursor[1], cursor[2]
   local num_lines = vim.api.nvim_buf_line_count(bufnr)
-  local start_line, end_line =
-    math.max(row - config.num_prefix_context_lines, 0), math.min(row + config.num_postfix_context_lines, num_lines + 1)
+  local start_line, end_line = 0, 0
+
+  if pltype == PayloadType.Suggestion then
+    start_line, end_line =
+      math.max(row - config.num_prefix_context_lines_for_suggestion, 0),
+      math.min(row + config.num_postfix_context_lines_for_suggestion, num_lines + 1)
+  elseif pltype == PayloadType.Nes then
+    start_line, end_line =
+      math.max(row - config.num_prefix_context_lines_for_nes, 0),
+      math.min(row + config.num_postfix_context_lines_nes, num_lines + 1)
+  end
+
   local lines = _build_lines(vim.api.nvim_buf_get_lines(bufnr, start_line, end_line, false), start_line)
   logger.debug('lines: ', lines)
   local ctx = {
