@@ -8,7 +8,7 @@ local logger = require('nes.logger')
 local curl = require('plenary.curl')
 local api_util = require('nes.api.utils')
 local Context = require('nes.context')
-local PayloadType = api_util.PayloadType
+local PayloadType = require('nes.api.payload_type').PayloadType
 
 function Api.get_headers()
   local header = nil

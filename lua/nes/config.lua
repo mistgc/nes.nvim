@@ -6,7 +6,7 @@
 ---@field debounce_ms integer
 ---
 ---@field num_prefix_context_lines_for_nes integer
----@field num_postfix_context_lines_nes integer
+---@field num_postfix_context_lines_for_nes integer
 ---
 ---@field num_prefix_context_lines_for_suggestion integer
 ---@field num_postfix_context_lines_for_suggestion integer

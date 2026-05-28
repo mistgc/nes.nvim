@@ -1,15 +1,10 @@
 ---@class nes.api.Utils
 local ApiUtils = {}
 
----@enum nes.api.utils.PayloadType
-ApiUtils.PayloadType = {
-  Suggestion = 0,
-  Nes = 1,
-}
-
 local config = require('nes.config')
 local prompt = require('nes.prompt')
 local logger = require('nes.logger')
+local PayloadType = require('nes.api.payload_type').PayloadType
 
 function ApiUtils.get_header_for_openai()
   return {
@@ -45,13 +40,13 @@ function ApiUtils.build_messages_for_anthropic(system_prompt)
 end
 
 ---@param ctx nes.Context
----@param pltype nes.api.utils.PayloadType
+---@param pltype nes.api.payload_type.PayloadType
 function ApiUtils.get_payload_for_openai(ctx, pltype)
   local system_prompt = nil
 
-  if pltype == ApiUtils.PayloadType.Suggestion then
+  if pltype == PayloadType.Suggestion then
     system_prompt = prompt.build_for_suggestion(ctx)
-  elseif pltype == ApiUtils.PayloadType.Nes then
+  elseif pltype == PayloadType.Nes then
     system_prompt = prompt.build_for_nes(ctx)
   end
 
@@ -65,13 +60,13 @@ function ApiUtils.get_payload_for_openai(ctx, pltype)
 end
 
 ---@param ctx nes.Context
----@param pltype nes.api.utils.PayloadType
+---@param pltype nes.api.payload_type.PayloadType
 function ApiUtils.get_payload_for_anthropic(ctx, pltype)
   local system_prompt = nil
 
-  if pltype == ApiUtils.PayloadType.Suggestion then
+  if pltype == PayloadType.Suggestion then
     system_prompt = prompt.build_for_suggestion(ctx)
-  elseif pltype == ApiUtils.PayloadType.Nes then
+  elseif pltype == PayloadType.Nes then
     system_prompt = prompt.build_for_nes(ctx)
   end
 
