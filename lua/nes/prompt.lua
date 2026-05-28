@@ -2,30 +2,39 @@ local Prompt = {}
 
 ---@param ctx nes.Context
 ---@return string
-function Prompt.build(ctx)
+function Prompt.build_for_nes(ctx)
+    local row, col = ctx.cursor[1], ctx.cursor[2]
     return string.format([[
-You are an expert code editor assistant. Predict the NEXT logical edit based on the developer's just-completed edit.
+You are an expert code editor. Provide an inline completion at the cursor position.
 
-This is NOT inline completion at the cursor. Predict a different location.
-
-## File: %s (%s)
+## File: %s
+## Filetype: %s
+## Cursor: line %d, column %d
 
 ## Context (line: content)
 ```
 %s
 ```
 
-Return ONLY valid JSON:
-{
-  "line": <1-indexed line>,
-  "start_col": <0-indexed start column>,
-  "end_col": <0-indexed end column>,
-  "old_text": "<exact existing text to replace>",
-  "new_text": "<replacement text>",
-  "reason": "<brief explanation>"
-}
-If no reasonable prediction: {"line":0,"old_text":"","new_text":"","reason":"no prediction"}
-]], ctx.filename, ctx.filename, ctx.lines)
+Return the completion in the following format:
+
+<<<SUGGESTION
+<the exact text to insert at the cursor>
+<<<END
+
+Rules:
+- Only output the text that should appear AFTER the cursor position on the current line and/or subsequent lines
+- Do NOT repeat text already present before the cursor on the current line
+- Keep completions concise (1-5 lines typically)
+- Match the indentation and style of surrounding code
+- If no reasonable prediction, output nothing between the markers
+]],
+        ctx.filename,
+        ctx.filetype,
+        row,
+        col,
+        ctx.lines
+    )
 end
 
 return Prompt
